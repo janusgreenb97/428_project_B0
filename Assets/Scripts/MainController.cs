@@ -18,7 +18,18 @@ public class MainController : MonoBehaviour {
         PITCH_POS = KeyCode.W,
         PITCH_NEG = KeyCode.S,
         ROLL_POS = KeyCode.Q,
-        ROLL_NEG = KeyCode.E
+        ROLL_NEG = KeyCode.E,
+        FORWARD = KeyCode.W,
+        BACKWARDS = KeyCode.S,
+        LEFT_STRAFE = KeyCode.A,
+        RIGHT_STRAFE = KeyCode.D,
+        LEFT_ROTATE = KeyCode.Q,
+        RIGHT_ROTATE = KeyCode.E
+    }
+
+    public enum MOUSE_INPUT : int {
+        PITCH_MOUSE = KeyCode.Mouse1,
+        YAW_MOUSE = KeyCode.Mouse1
     }
 
     #endregion
@@ -27,11 +38,15 @@ public class MainController : MonoBehaviour {
 
     public Transform TargetObject;
     [Range(1f, 20f)] public float ObjectRotationSpeed = 5f;
+    [Range(1f, 20f)] public float CameraRotationThreshold = 0.5f;
+    public bool InvertCameraAxis = false;
     public TOGGLE_MODE ToggleMode = TOGGLE_MODE.TARGET_CAMERA;
     
     private Transform g_Camera;
 
     private Space g_SpaceTarget = Space.World;
+
+    private Vector2 g_LastMousePosition;
 
     #endregion
 
@@ -63,6 +78,26 @@ public class MainController : MonoBehaviour {
             ToggleMode = TOGGLE_MODE.TARGET_CAMERA;
             Debug.Log("Camera Selected");
         }
+
+        // Hanlde Mouse
+        foreach(MOUSE_INPUT mi in Enum.GetValues(typeof(MOUSE_INPUT))) {
+            if(Input.GetKey((KeyCode)mi)) {
+                float horDelta = g_LastMousePosition.x - Input.mousePosition.x;
+                float verDelta = g_LastMousePosition.y - Input.mousePosition.y;
+                if (Mathf.Abs(horDelta) > CameraRotationThreshold) {
+                    int horDir = horDelta > 0 ? (InvertCameraAxis ? 1 : -1) : (InvertCameraAxis ? -1 : 1);
+                    g_Camera.Rotate(Vector3.up, horDir * speedMod * ObjectRotationSpeed * Time.deltaTime, Space.World);
+                }
+                if (Mathf.Abs(verDelta) > CameraRotationThreshold) {
+                    int verDir = verDelta > 0 ? (InvertCameraAxis ? -1 : 1) : (InvertCameraAxis ? 1 : -1);
+                    g_Camera.Rotate(g_Camera.right, verDir * speedMod * ObjectRotationSpeed * Time.deltaTime, Space.World);
+                }
+
+            }
+        }
+
+
+        // Handle Keyboard
 
         if(ToggleMode == TOGGLE_MODE.TARGET_OBJECT && TargetObject != null) {
             foreach (KEYBOARD_INPUT val in Enum.GetValues(typeof(KEYBOARD_INPUT))) {
@@ -134,7 +169,28 @@ public class MainController : MonoBehaviour {
             }
         } else if (ToggleMode == TOGGLE_MODE.TARGET_CAMERA && g_Camera != null) {
             foreach (KEYBOARD_INPUT val in Enum.GetValues(typeof(KEYBOARD_INPUT))) {
-                // TODO - YOU complete the camera transformations now!
+                if(Input.GetKey((KeyCode) val)) {
+                    switch(val) {
+                        case KEYBOARD_INPUT.FORWARD:
+                            g_Camera.position += (g_Camera.forward * Time.deltaTime * speedMod);
+                            break;
+                        case KEYBOARD_INPUT.BACKWARDS:
+                            g_Camera.position -= (g_Camera.forward * Time.deltaTime * speedMod);
+                            break;
+                        case KEYBOARD_INPUT.LEFT_STRAFE:
+                            g_Camera.position -= (g_Camera.right * Time.deltaTime * speedMod);
+                            break;
+                        case KEYBOARD_INPUT.RIGHT_STRAFE:
+                            g_Camera.position += (g_Camera.right * Time.deltaTime * speedMod);
+                            break;
+                        case KEYBOARD_INPUT.LEFT_ROTATE:
+                            g_Camera.Rotate(Vector3.up, -(speedMod * Time.deltaTime * ObjectRotationSpeed), Space.World);
+                            break;
+                        case KEYBOARD_INPUT.RIGHT_ROTATE:
+                            g_Camera.Rotate(Vector3.up, speedMod * Time.deltaTime * ObjectRotationSpeed, Space.World);
+                            break;
+                    }
+                }
             }
         }
 
@@ -150,6 +206,8 @@ public class MainController : MonoBehaviour {
                 Debug.DrawRay(TargetObject.position, TargetObject.up, Color.green);
             }
         }
+
+        g_LastMousePosition = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
 
     }
 

@@ -387,6 +387,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   TargetObject: {fileID: 1701458484}
   ObjectRotationSpeed: 20
+  CameraRotationThreshold: 8
+  InvertCameraAxis: 0
   ToggleMode: 283
 --- !u!4 &1714928339
 Transform:
